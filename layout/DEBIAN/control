@@ -1,0 +1,12 @@
+Package: com.julioverne.widplayer
+Name: WidPlayer
+Author: julioverne <julioverne@me.com>
+Version: 1.7
+Depends: mobilesubstrate, preferenceloader, firmware (>= 8.0)
+Architecture: iphoneos-arm
+Description: Music widget for your screen
+Homepage: http://twitter.com/ijulioverne
+Depiction: http://julio.xarold.com/files-deb/widplayer.html
+Maintainer: Julio
+Section: Tweaks
+Icon: file:///Library/PreferenceBundles/WidPlayer.bundle/icon@2x.png
