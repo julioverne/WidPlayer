@@ -37,10 +37,28 @@
 											  cell:PSLinkListCell
 											  edit:Nil];
 		[spec setProperty:@"Blur" forKey:@"key"];
-		[spec setProperty:@1 forKey:@"default"];
-		[spec setValues:@[@0, @1, @2, @3, @4] titles:@[@"Extra Light Blur", @"Light Blur", @"Dark Blur", @"Transparent", @"Light Blur + Artwork"]];
+		
+		if ((objc_getClass("UIBlurEffect") != nil && objc_getClass("UIVisualEffectView") != nil)) {
+			[spec setProperty:@4 forKey:@"default"];
+			[spec setValues:@[@0, @1, @2, @3, @4] titles:@[@"Extra Light Blur", @"Light Blur", @"Dark Blur", @"Transparent", @"Light Blur + Artwork"]];
+		} else {
+			[spec setProperty:@1 forKey:@"default"];
+			[spec setValues:@[@0, @1] titles:@[@"Transparent", @"Light Blur + Artwork"]];
+		}
+		
         [specifiers addObject:spec];
-		spec = [PSSpecifier preferenceSpecifierNamed:@"Hide if stop"
+		spec = [PSSpecifier preferenceSpecifierNamed:@"Lyrics"
+                                              target:self
+											  set:@selector(setPreferenceValue:specifier:)
+											  get:@selector(readPreferenceValue:)
+                                              detail:Nil
+											  cell:PSSwitchCell
+											  edit:Nil];
+		[spec setProperty:@"Lyrics" forKey:@"key"];
+		[spec setProperty:@YES forKey:@"default"];
+        [specifiers addObject:spec];
+		
+		spec = [PSSpecifier preferenceSpecifierNamed:@"Hide if Stop"
                                               target:self
 											  set:@selector(setPreferenceValue:specifier:)
 											  get:@selector(readPreferenceValue:)
@@ -50,17 +68,7 @@
 		[spec setProperty:@"HideNoPlaying" forKey:@"key"];
 		[spec setProperty:@NO forKey:@"default"];
         [specifiers addObject:spec];
-		spec = [PSSpecifier preferenceSpecifierNamed:@"Hide in Lock Screen"
-                                              target:self
-											  set:@selector(setPreferenceValue:specifier:)
-											  get:@selector(readPreferenceValue:)
-                                              detail:Nil
-											  cell:PSSwitchCell
-											  edit:Nil];
-		[spec setProperty:@"WidPlayerHideLockScreen" forKey:@"key"];
-		[spec setProperty:@NO forKey:@"default"];
-        [specifiers addObject:spec];
-		
+				
 		spec = [PSSpecifier preferenceSpecifierNamed:@"Widget Width"
 		                                      target:self
 											  set:Nil
@@ -78,8 +86,8 @@
 											  cell:PSSliderCell
 											  edit:Nil];
 		[spec setProperty:@"WidgetWidth" forKey:@"key"];
-		[spec setProperty:@([[UIScreen mainScreen] bounds].size.width/1.6) forKey:@"default"];
-		[spec setProperty:@0 forKey:@"min"];
+		[spec setProperty:@(250) forKey:@"default"];
+		[spec setProperty:@200 forKey:@"min"];
 		[spec setProperty:@([[UIScreen mainScreen] bounds].size.width) forKey:@"max"];
 		[spec setProperty:@NO forKey:@"isContinuous"];
 		[spec setProperty:@YES forKey:@"showValue"];
@@ -101,7 +109,7 @@
 											  cell:PSSliderCell
 											  edit:Nil];
 		[spec setProperty:@"WidgetRadius" forKey:@"key"];
-		[spec setProperty:@15 forKey:@"default"];
+		[spec setProperty:@10 forKey:@"default"];
 		[spec setProperty:@0 forKey:@"min"];
 		[spec setProperty:@50 forKey:@"max"];
 		[spec setProperty:@YES forKey:@"isContinuous"];
@@ -156,16 +164,23 @@
         [specifiers addObject:spec];
 		spec = [PSSpecifier emptyGroupSpecifier];
         [specifiers addObject:spec];
-		spec = [PSSpecifier preferenceSpecifierNamed:@"Support development"
+		spec = [PSSpecifier preferenceSpecifierNamed:@"Reset Settings"
                                               target:self
                                                  set:NULL
                                                  get:NULL
                                               detail:Nil
                                                 cell:PSLinkCell
                                                 edit:Nil];
-        spec->action = @selector(paypal);
-		[spec setProperty:[NSNumber numberWithBool:TRUE] forKey:@"hasIcon"];
-		[spec setProperty:[UIImage imageWithContentsOfFile:[[self bundle] pathForResource:@"paypal" ofType:@"png"]] forKey:@"iconImage"];
+        spec->action = @selector(reset);
+        [specifiers addObject:spec];
+		spec = [PSSpecifier preferenceSpecifierNamed:@"Developer"
+		                                      target:self
+											  set:Nil
+											  get:Nil
+                                              detail:Nil
+											  cell:PSGroupCell
+											  edit:Nil];
+		[spec setProperty:@"Developer" forKey:@"label"];
         [specifiers addObject:spec];
 		spec = [PSSpecifier preferenceSpecifierNamed:@"Follow julioverne"
                                               target:self
@@ -196,10 +211,6 @@
 		[app openURL:[NSURL URLWithString:@"https://mobile.twitter.com/ijulioverne"]];
 	}
 }
-- (void)paypal
-{
-	[[UIApplication sharedApplication] openURL:[NSURL URLWithString:@"https://www.paypal.com/cgi-bin/webscr?business=jlio_verne@hotmail.com&cmd=_xclick&currency_code=USD&amount=1&item_name=WidPlayer%20Development"]];
-}
 - (void)love
 {
 	SLComposeViewController *twitter = [SLComposeViewController composeViewControllerForServiceType:SLServiceTypeTwitter];
@@ -208,10 +219,16 @@
 		[[self navigationController] presentViewController:twitter animated:YES completion:nil];
 	}
 }
+- (void)reset
+{
+	[@{} writeToFile:@PLIST_PATH_Settings atomically:YES];
+	[self reloadSpecifiers];
+	notify_post("com.julioverne.widplayer/Settings");
+}
 - (void)setPreferenceValue:(id)value specifier:(PSSpecifier *)specifier
 {
 	@autoreleasepool {
-		NSMutableDictionary *CydiaEnablePrefsCheck = [[NSMutableDictionary alloc] initWithContentsOfFile:@PLIST_PATH_Settings];
+		NSMutableDictionary *CydiaEnablePrefsCheck = [[NSMutableDictionary alloc] initWithContentsOfFile:@PLIST_PATH_Settings]?:[NSMutableDictionary dictionary];
 		[CydiaEnablePrefsCheck setObject:value forKey:[specifier identifier]];
 		[CydiaEnablePrefsCheck writeToFile:@PLIST_PATH_Settings atomically:YES];
 		notify_post("com.julioverne.widplayer/Settings");
@@ -220,7 +237,7 @@
 - (id)readPreferenceValue:(PSSpecifier*)specifier
 {
 	@autoreleasepool {
-		NSDictionary *CydiaEnablePrefsCheck = [[NSMutableDictionary alloc] initWithContentsOfFile:@PLIST_PATH_Settings];
+		NSDictionary *CydiaEnablePrefsCheck = [[NSDictionary alloc] initWithContentsOfFile:@PLIST_PATH_Settings];
 		return CydiaEnablePrefsCheck[[specifier identifier]]?:[[specifier properties] objectForKey:@"default"];
 	}
 }
@@ -228,20 +245,6 @@
 {
 	[super _returnKeyPressed:arg1];
 	[self.view endEditing:YES];
-}
-- (id)init
-{
-	self = [super init];
-	if (access(PLIST_PATH_Settings, F_OK) != 0) {
-			@autoreleasepool {
-				NSDictionary* Pref = @{
-				   @"Enabled": @YES,
-				   @"Blur": @4,
-				};
-				[Pref writeToFile:@PLIST_PATH_Settings atomically:YES];
-			}
-	}
-    return self;
 }
 
 - (void)HeaderCell

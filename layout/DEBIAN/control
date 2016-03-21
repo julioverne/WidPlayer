@@ -1,8 +1,8 @@
 Package: com.julioverne.widplayer
 Name: WidPlayer
 Author: julioverne <julioverne@me.com>
-Version: 1.7
-Depends: mobilesubstrate, preferenceloader, firmware (>= 8.0)
+Version: 2.7
+Depends: mobilesubstrate, preferenceloader, firmware (>= 7.0)
 Architecture: iphoneos-arm
 Description: Music widget for your screen
 Homepage: http://twitter.com/ijulioverne
