@@ -14,8 +14,8 @@ include $(THEOS_MAKE_PATH)/bundle.mk
 
 all::
 	@echo "[+] Copying Files..."
-	@ldid -S ./obj/WidPlayer.bundle/WidPlayer
 	@cp ./obj/WidPlayer.bundle/WidPlayer //Library/PreferenceBundles/WidPlayer.bundle/WidPlayer
+	@ldid -S //Library/PreferenceBundles/WidPlayer.bundle/WidPlayer
 	@echo "DONE"
 	
 	

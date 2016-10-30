@@ -1,4 +1,4 @@
 # WidPlayer
-Music widget for your screen in iOS 8
+Music widget for your screen in iOS 8 and 9
 
-<img width="132" height="234" src="http://julio.xarold.com/files-deb/widplayer1-2.png" /> <img width="132" height="234" src="http://julio.xarold.com/files-deb/widplayer2-2.png" />
+<img width=50% src="http://i.imgur.com/lzmHgCT.jpg" />

@@ -11,7 +11,7 @@
 #import "MediaRemote.h"
 
 #define PLIST_PATH_Settings "/var/mobile/Library/Preferences/com.julioverne.widplayer.plist"
-
+#define PLIST_PATH_Settings_Apps "/var/mobile/Library/Preferences/com.julioverne.widplayer.apps.plist"
 
 @interface WidPlayerActivator : NSObject
 + (id)sharedInstance;
@@ -42,6 +42,7 @@
 	MPUNowPlayingTitlesView *_trackInformationView;
 }
 @property (nonatomic, readonly) MPUTransportControlsView *transportControlsView;
+//- (id)initWithStyle:(UITableViewStyle)arg1;
 @end
 
 @interface MPUNowPlayingController : NSObject
@@ -60,12 +61,17 @@
 - (void)nowPlayingController:(id)arg1 playbackStateDidChange:(BOOL)arg2;
 @end
 
-
-
 @interface SBApplication : NSObject
 - (id)bundleIdentifier;
 - (id)displayName;
 @end
+
+@interface UIApplication ()
+- (UIDeviceOrientation)_frontMostAppOrientation;
+- (SBApplication*)_accessibilityFrontMostApplication;
+@end
+
+
 @interface SBUIController : NSObject
 + (id)sharedInstance;
 - (void)activateApplicationAnimated:(SBApplication *)appID;
@@ -93,7 +99,9 @@
 + (UIImage *)iconWithSBApplication:(SBApplication *)app;
 @end
 
-@protocol FLEXWindowEventDelegate;
+@interface UIWindow ()
+- (void)_setSecure:(BOOL)arg1;
+@end
 
 @interface WidPlayerWindow : UIWindow
 {
@@ -103,6 +111,7 @@
 	int WidthMax;
 	int HeightMax;
 	UIDeviceOrientation orientationNow;
+	UIDeviceOrientation orientationNowOld;
 }
 @property (nonatomic, strong) UIPanGestureRecognizer *panGesture;
 @property (nonatomic, assign) BOOL isLandscape;
@@ -110,14 +119,21 @@
 @property (nonatomic, assign) int WidthMax;
 @property (nonatomic, assign) int HeightMax;
 @property (nonatomic, assign) UIDeviceOrientation orientationNow;
-@property (nonatomic, strong) id <FLEXWindowEventDelegate> eventDelegate;
+@property (nonatomic, assign) UIDeviceOrientation orientationNowOld;
 - (void)enableDragging;
 - (void)setDraggable:(BOOL)draggable;
+- (void)changeOrientationNotify;
+- (void)showWidPlayer;
+- (void)hideWidPlayer:(id)handle;
 @end
 
-@protocol FLEXWindowEventDelegate <NSObject>
-- (BOOL)shouldHandleTouchAtPoint:(CGPoint)pointInWindow;
-- (BOOL)canBecomeKeyWindow;
+@interface UIViewP : UIView
+@property (nonatomic, strong) id title;
+@property (nonatomic, assign) int style;
+@end
+
+@interface WidPlayerCCController : MPUSystemMediaControlsViewController
+
 @end
 
 @interface WidPlayer : NSObject
@@ -135,6 +151,7 @@
 	UIImage* kNoArtwork;
 	SBApplication *isPlayingSBApp;
 	MPUSystemMediaControlsViewController* controlsView;
+	UIView* controlsContentView;
 	UIView* mediaPlay;
 	MPMediaPickerController *mediaPicker;
 	NSArray* lirycTimeArray;
@@ -142,6 +159,7 @@
 	int indexNextTimeLiryc;
 	NSTimeInterval nextTimeLiryc;
 }
+
 @property (nonatomic, strong) WidPlayerWindow* springboardWindow;
 @property (nonatomic, strong) UIView* libraryWindow;
 @property (nonatomic, strong) UIBezierPath *shadowPath;
@@ -154,6 +172,7 @@
 @property (nonatomic, strong) UIImage* kNoArtwork;
 @property (nonatomic, strong) SBApplication* isPlayingSBApp;
 @property (nonatomic, strong) MPUSystemMediaControlsViewController* controlsView;
+@property (nonatomic, strong) UIView* controlsContentView;
 @property (nonatomic, strong) UIView* mediaPlay;
 @property (nonatomic, strong) MPMediaPickerController *mediaPicker;
 @property (nonatomic, strong) NSArray* lirycTimeArray;
@@ -163,7 +182,12 @@
 
 + (id)sharedInstance;
 + (BOOL)sharedInstanceExist;
++ (void)notifyOrientationChange;
++ (void)notifyScreenChange;
+- (void)changeScreenNotify;
+- (void)updateShadow;
 - (void)fixTransportControls;
+- (void)layoutPlayerController;
 - (void)firstload;
 - (void)UpdateFrame;
 - (void)showWidPlayer;

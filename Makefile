@@ -12,10 +12,8 @@ include $(THEOS_MAKE_PATH)/tweak.mk
 
 all::
 	@echo "[+] Copying Files..."
-	@ldid -S ./obj/WidPlayer.dylib
-	@cp ./obj/WidPlayer.dylib //Library/MobileSubstrate/DynamicLibraries/WidPlayer.dylib
+	@cp -rf ./obj/WidPlayer.dylib //Library/MobileSubstrate/DynamicLibraries/WidPlayer.dylib
+	@/usr/bin/ldid -S //Library/MobileSubstrate/DynamicLibraries/WidPlayer.dylib
 	@cp ./WidPlayer.plist //Library/MobileSubstrate/DynamicLibraries/WidPlayer.plist
 	@echo "DONE"
-	@killall SpringBoard
-
-	
+	@killall SpringBoard	

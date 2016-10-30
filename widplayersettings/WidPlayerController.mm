@@ -4,6 +4,7 @@
 #import "prefs.h"
 
 #define PLIST_PATH_Settings "/var/mobile/Library/Preferences/com.julioverne.widplayer.plist"
+#define PLIST_PATH_Settings_Apps "/var/mobile/Library/Preferences/com.julioverne.widplayer.apps.plist"
 
 @interface WidPlayerController : PSListController {
 	UILabel* _label;
@@ -11,6 +12,8 @@
 }
 - (void)HeaderCell;
 @end
+
+
 
 @implementation WidPlayerController
 - (id)specifiers {
@@ -29,7 +32,7 @@
         [specifiers addObject:spec];
 		spec = [PSSpecifier emptyGroupSpecifier];
         [specifiers addObject:spec];
-		spec = [PSSpecifier preferenceSpecifierNamed:@"Widget interface style"
+		spec = [PSSpecifier preferenceSpecifierNamed:@"Widget Interface Style"
                                               target:self
 											  set:@selector(setPreferenceValue:specifier:)
 											  get:@selector(readPreferenceValue:)
@@ -45,9 +48,22 @@
 			[spec setProperty:@1 forKey:@"default"];
 			[spec setValues:@[@0, @1] titles:@[@"Transparent", @"Light Blur + Artwork"]];
 		}
+		[specifiers addObject:spec];
 		
+		spec = [PSSpecifier preferenceSpecifierNamed:@"Player Controls Style"
+                                              target:self
+											  set:@selector(setPreferenceValue:specifier:)
+											  get:@selector(readPreferenceValue:)
+                                              detail:PSListItemsController.class
+											  cell:PSLinkListCell
+											  edit:Nil];
+		[spec setProperty:@"Button" forKey:@"key"];
+		[spec setProperty:@1 forKey:@"default"];
+		[spec setProperty:@YES forKey:@"PromptRespring"];
+		[spec setValues:@[@1, @2] titles:@[@"Black", @"White"]];
         [specifiers addObject:spec];
-		spec = [PSSpecifier preferenceSpecifierNamed:@"Lyrics"
+		
+		spec = [PSSpecifier preferenceSpecifierNamed:@"Live Lyrics"
                                               target:self
 											  set:@selector(setPreferenceValue:specifier:)
 											  get:@selector(readPreferenceValue:)
@@ -57,8 +73,29 @@
 		[spec setProperty:@"Lyrics" forKey:@"key"];
 		[spec setProperty:@YES forKey:@"default"];
         [specifiers addObject:spec];
+		spec = [PSSpecifier preferenceSpecifierNamed:@"Lyrics Use Dark Blur"
+                                              target:self
+											  set:@selector(setPreferenceValue:specifier:)
+											  get:@selector(readPreferenceValue:)
+                                              detail:Nil
+											  cell:PSSwitchCell
+											  edit:Nil];
+		[spec setProperty:@"LyricBlurDark" forKey:@"key"];
+		[spec setProperty:@YES forKey:@"default"];
+        [specifiers addObject:spec];
 		
-		spec = [PSSpecifier preferenceSpecifierNamed:@"Hide if Stop"
+		spec = [PSSpecifier preferenceSpecifierNamed:@"Show In LockScreen"
+                                              target:self
+											  set:@selector(setPreferenceValue:specifier:)
+											  get:@selector(readPreferenceValue:)
+                                              detail:Nil
+											  cell:PSSwitchCell
+											  edit:Nil];
+		[spec setProperty:@"LockScreen" forKey:@"key"];
+		[spec setProperty:@YES forKey:@"default"];
+        [specifiers addObject:spec];
+		
+		spec = [PSSpecifier preferenceSpecifierNamed:@"Hide If Stop"
                                               target:self
 											  set:@selector(setPreferenceValue:specifier:)
 											  get:@selector(readPreferenceValue:)
@@ -68,7 +105,91 @@
 		[spec setProperty:@"HideNoPlaying" forKey:@"key"];
 		[spec setProperty:@NO forKey:@"default"];
         [specifiers addObject:spec];
-				
+		
+		spec = [PSSpecifier preferenceSpecifierNamed:@"Hide Artwork"
+                                              target:self
+											  set:@selector(setPreferenceValue:specifier:)
+											  get:@selector(readPreferenceValue:)
+                                              detail:Nil
+											  cell:PSSwitchCell
+											  edit:Nil];
+		[spec setProperty:@"HiddenArtwork" forKey:@"key"];
+		[spec setProperty:@NO forKey:@"default"];
+        [specifiers addObject:spec];
+		
+		spec = [PSSpecifier preferenceSpecifierNamed:@"Title Translucent"
+                                              target:self
+											  set:@selector(setPreferenceValue:specifier:)
+											  get:@selector(readPreferenceValue:)
+                                              detail:Nil
+											  cell:PSSwitchCell
+											  edit:Nil];
+		[spec setProperty:@"TitleTransparent" forKey:@"key"];
+		[spec setProperty:@YES forKey:@"PromptRespring"];
+		[spec setProperty:@NO forKey:@"default"];
+        [specifiers addObject:spec];
+		
+		
+		spec = [PSSpecifier preferenceSpecifierNamed:@"Disable In Apps"
+		                                      target:self
+											  set:Nil
+											  get:Nil
+                                              detail:Nil
+											  cell:PSGroupCell
+											  edit:Nil];
+		[spec setProperty:@"Disable In Apps" forKey:@"label"];
+        [specifiers addObject:spec];
+		spec = [PSSpecifier preferenceSpecifierNamed:@"Enabled"
+                                              target:self
+											  set:@selector(setPreferenceValue:specifier:)
+											  get:@selector(readPreferenceValue:)
+                                              detail:Nil
+											  cell:PSSwitchCell
+											  edit:Nil];
+		[spec setProperty:@"EnableBlacklist" forKey:@"key"];
+		[spec setProperty:@YES forKey:@"UpdateAppCell"];
+		[spec setProperty:@NO forKey:@"default"];
+        [specifiers addObject:spec];		
+		spec = [PSSpecifier preferenceSpecifierNamed:@"List Apps"
+                                              target:self
+                                                 set:NULL
+                                                 get:NULL
+                                              detail:Nil
+                                                cell:PSLinkCell
+                                                edit:Nil];
+		if (access("/System/Library/PreferenceBundles/AppList.bundle", F_OK) == 0) {
+			[spec setProperty:@YES forKey:@"isContoller"];
+			[spec setProperty:@YES forKey:@"ALAllowsSelection"];
+			[spec setProperty:@"AppList" forKey:@"bundle"];
+			[spec setProperty:@"/System/Library/PreferenceBundles/AppList.bundle" forKey:@"lazy-bundle"];
+			[spec setProperty:@"" forKey:@"ALSettingsKeyPrefix"];
+			[spec setProperty:@"com.julioverne.widplayer/Settings" forKey:@"ALChangeNotification"];
+			[spec setProperty:@PLIST_PATH_Settings_Apps forKey:@"ALSettingsPath"];
+			[spec setProperty:@NO forKey:@"ALSettingsDefaultValue"];
+			[spec setProperty:@[
+			@{
+				@"title": @"System Applications",
+				@"predicate": @"(isSystemApplication = TRUE)",
+				@"cell-class-name": @"ALSwitchCell",
+				@"icon-size": @29,
+				@"suppress-hidden-apps": @1,
+			},
+			@{
+				@"title": @"User Applications",
+				@"predicate": @"(isSystemApplication = FALSE)",
+				@"cell-class-name": @"ALSwitchCell",
+				@"icon-size": @29,
+				@"suppress-hidden-apps": @1,
+			}] forKey:@"ALSectionDescriptors"];
+			
+			spec->action = @selector(lazyLoadBundle:);
+		}
+		[spec setProperty:@([[self readPreferenceValue:[specifiers lastObject]] boolValue]) forKey: @"enabled"];
+        [specifiers addObject:spec];
+		
+		
+		
+		
 		spec = [PSSpecifier preferenceSpecifierNamed:@"Widget Width"
 		                                      target:self
 											  set:Nil
@@ -92,6 +213,29 @@
 		[spec setProperty:@NO forKey:@"isContinuous"];
 		[spec setProperty:@YES forKey:@"showValue"];
         [specifiers addObject:spec];
+		spec = [PSSpecifier preferenceSpecifierNamed:@"Widget Height Proportion"
+		                                      target:self
+											  set:Nil
+											  get:Nil
+                                              detail:Nil
+											  cell:PSGroupCell
+											  edit:Nil];
+		[spec setProperty:@"Widget Height Proportion" forKey:@"label"];
+        [specifiers addObject:spec];
+		spec = [PSSpecifier preferenceSpecifierNamed:@"Widget Height Proportion"
+                                              target:self
+											  set:@selector(setPreferenceValue:specifier:)
+											  get:@selector(readPreferenceValue:)
+                                              detail:Nil
+											  cell:PSSliderCell
+											  edit:Nil];
+		[spec setProperty:@"WidgetHeightPercent" forKey:@"key"];
+		[spec setProperty:@(7.0) forKey:@"default"];
+		[spec setProperty:@(3.0) forKey:@"min"];
+		[spec setProperty:@(9.8) forKey:@"max"];
+		[spec setProperty:@NO forKey:@"isContinuous"];
+		[spec setProperty:@YES forKey:@"showValue"];
+        [specifiers addObject:spec];
 		spec = [PSSpecifier preferenceSpecifierNamed:@"Widget Radius"
 		                                      target:self
 											  set:Nil
@@ -109,7 +253,7 @@
 											  cell:PSSliderCell
 											  edit:Nil];
 		[spec setProperty:@"WidgetRadius" forKey:@"key"];
-		[spec setProperty:@10 forKey:@"default"];
+		[spec setProperty:@5 forKey:@"default"];
 		[spec setProperty:@0 forKey:@"min"];
 		[spec setProperty:@50 forKey:@"max"];
 		[spec setProperty:@YES forKey:@"isContinuous"];
@@ -132,9 +276,129 @@
 											  cell:PSSliderCell
 											  edit:Nil];
 		[spec setProperty:@"ArtworkRadius" forKey:@"key"];
-		[spec setProperty:@10 forKey:@"default"];
+		[spec setProperty:@3 forKey:@"default"];
 		[spec setProperty:@0 forKey:@"min"];
 		[spec setProperty:@80 forKey:@"max"];
+		[spec setProperty:@YES forKey:@"isContinuous"];
+		[spec setProperty:@YES forKey:@"showValue"];
+        [specifiers addObject:spec];
+		
+		spec = [PSSpecifier preferenceSpecifierNamed:@"Widget Artwork BG Blur Radius"
+		                                      target:self
+											  set:Nil
+											  get:Nil
+                                              detail:Nil
+											  cell:PSGroupCell
+											  edit:Nil];
+		[spec setProperty:@"Widget Artwork BG Blur Radius" forKey:@"label"];
+        [specifiers addObject:spec];
+		spec = [PSSpecifier preferenceSpecifierNamed:@"Widget Artwork BG Blur Radius"
+                                              target:self
+											  set:@selector(setPreferenceValue:specifier:)
+											  get:@selector(readPreferenceValue:)
+                                              detail:Nil
+											  cell:PSSliderCell
+											  edit:Nil];
+		[spec setProperty:@"WidgetArtworkBlurRadius" forKey:@"key"];
+		[spec setProperty:@(8.0) forKey:@"default"];
+		[spec setProperty:@(0.0) forKey:@"min"];
+		[spec setProperty:@(80.0) forKey:@"max"];
+		[spec setProperty:@NO forKey:@"isContinuous"];
+		[spec setProperty:@YES forKey:@"showValue"];
+        [specifiers addObject:spec];
+		
+		spec = [PSSpecifier preferenceSpecifierNamed:@"Widget BG Alpha"
+		                                      target:self
+											  set:Nil
+											  get:Nil
+                                              detail:Nil
+											  cell:PSGroupCell
+											  edit:Nil];
+		[spec setProperty:@"Widget BG Alpha" forKey:@"label"];
+        [specifiers addObject:spec];
+		spec = [PSSpecifier preferenceSpecifierNamed:@"Widget BG Alpha"
+                                              target:self
+											  set:@selector(setPreferenceValue:specifier:)
+											  get:@selector(readPreferenceValue:)
+                                              detail:Nil
+											  cell:PSSliderCell
+											  edit:Nil];
+		[spec setProperty:@"WidgetBGAlpha" forKey:@"key"];
+		[spec setProperty:@(1.0) forKey:@"default"];
+		[spec setProperty:@(0.0) forKey:@"min"];
+		[spec setProperty:@(1.0) forKey:@"max"];
+		[spec setProperty:@YES forKey:@"isContinuous"];
+		[spec setProperty:@YES forKey:@"showValue"];
+        [specifiers addObject:spec];
+		
+		spec = [PSSpecifier preferenceSpecifierNamed:@"Widget Shadow Alpha"
+		                                      target:self
+											  set:Nil
+											  get:Nil
+                                              detail:Nil
+											  cell:PSGroupCell
+											  edit:Nil];
+		[spec setProperty:@"Widget Shadow Alpha" forKey:@"label"];
+        [specifiers addObject:spec];
+		spec = [PSSpecifier preferenceSpecifierNamed:@"Widget Shadow Alpha"
+                                              target:self
+											  set:@selector(setPreferenceValue:specifier:)
+											  get:@selector(readPreferenceValue:)
+                                              detail:Nil
+											  cell:PSSliderCell
+											  edit:Nil];
+		[spec setProperty:@"ShadowAlpha" forKey:@"key"];
+		[spec setProperty:@(0.5) forKey:@"default"];
+		[spec setProperty:@(0.0) forKey:@"min"];
+		[spec setProperty:@(1.0) forKey:@"max"];
+		[spec setProperty:@YES forKey:@"isContinuous"];
+		[spec setProperty:@YES forKey:@"showValue"];
+        [specifiers addObject:spec];
+		
+		spec = [PSSpecifier preferenceSpecifierNamed:@"Artwork Alpha"
+		                                      target:self
+											  set:Nil
+											  get:Nil
+                                              detail:Nil
+											  cell:PSGroupCell
+											  edit:Nil];
+		[spec setProperty:@"Artwork Alpha" forKey:@"label"];
+        [specifiers addObject:spec];
+		spec = [PSSpecifier preferenceSpecifierNamed:@"Artwork Alpha"
+                                              target:self
+											  set:@selector(setPreferenceValue:specifier:)
+											  get:@selector(readPreferenceValue:)
+                                              detail:Nil
+											  cell:PSSliderCell
+											  edit:Nil];
+		[spec setProperty:@"ArtworkAlpha" forKey:@"key"];
+		[spec setProperty:@(1.0) forKey:@"default"];
+		[spec setProperty:@(0.0) forKey:@"min"];
+		[spec setProperty:@(1.0) forKey:@"max"];
+		[spec setProperty:@YES forKey:@"isContinuous"];
+		[spec setProperty:@YES forKey:@"showValue"];
+        [specifiers addObject:spec];
+		
+		spec = [PSSpecifier preferenceSpecifierNamed:@"Controls Alpha"
+		                                      target:self
+											  set:Nil
+											  get:Nil
+                                              detail:Nil
+											  cell:PSGroupCell
+											  edit:Nil];
+		[spec setProperty:@"Controls Alpha" forKey:@"label"];
+        [specifiers addObject:spec];
+		spec = [PSSpecifier preferenceSpecifierNamed:@"Controls Alpha"
+                                              target:self
+											  set:@selector(setPreferenceValue:specifier:)
+											  get:@selector(readPreferenceValue:)
+                                              detail:Nil
+											  cell:PSSliderCell
+											  edit:Nil];
+		[spec setProperty:@"ControlsAlpha" forKey:@"key"];
+		[spec setProperty:@(1.0) forKey:@"default"];
+		[spec setProperty:@(0.0) forKey:@"min"];
+		[spec setProperty:@(1.0) forKey:@"max"];
 		[spec setProperty:@YES forKey:@"isContinuous"];
 		[spec setProperty:@YES forKey:@"showValue"];
         [specifiers addObject:spec];
@@ -194,7 +458,7 @@
 		[spec setProperty:[UIImage imageWithContentsOfFile:[[self bundle] pathForResource:@"twitter" ofType:@"png"]] forKey:@"iconImage"];
         [specifiers addObject:spec];
 		spec = [PSSpecifier emptyGroupSpecifier];
-        [spec setProperty:@"WidPlayer © 2015" forKey:@"footerText"];
+        [spec setProperty:@"WidPlayer © 2016" forKey:@"footerText"];
         [specifiers addObject:spec];
 		_specifiers = [specifiers copy];
 	}
@@ -232,7 +496,26 @@
 		[CydiaEnablePrefsCheck setObject:value forKey:[specifier identifier]];
 		[CydiaEnablePrefsCheck writeToFile:@PLIST_PATH_Settings atomically:YES];
 		notify_post("com.julioverne.widplayer/Settings");
+		if ([[specifier properties] objectForKey:@"UpdateAppCell"]) {
+			if (PSSpecifier* cellApp = [self specifierAtIndex:13]) {
+				if ([[cellApp properties] objectForKey:@"ALAllowsSelection"]) {
+					[cellApp setProperty:@([value boolValue]) forKey: @"enabled"];
+					[self reloadSpecifierAtIndex:13 animated:YES];
+				}
+			}
+		}
+		if ([[specifier properties] objectForKey:@"PromptRespring"]) {
+			UIAlertView *alert = [[UIAlertView alloc] initWithTitle:self.title message:@"An Respring is Requerid for this option." delegate:self cancelButtonTitle:@"Cancel" otherButtonTitles:@"Respring", nil];
+			alert.tag = 55;
+			[alert show];
+		}
 	}
+}
+- (void)alertView:(UIAlertView *)alertView didDismissWithButtonIndex:(NSInteger)buttonIndex
+{
+    if (alertView.tag == 55 && buttonIndex == 1) {
+        system("killall backboardd SpringBoard");
+    }
 }
 - (id)readPreferenceValue:(PSSpecifier*)specifier
 {
@@ -258,7 +541,7 @@
 		_label = [[UILabel alloc] initWithFrame:frame];
 		[_label setNumberOfLines:1];
 		_label.font = [UIFont fontWithName:@"HelveticaNeue-UltraLight" size:48];
-		[_label setText:@"WidPlayer"];
+		[_label setText:self.title];
 		[_label setBackgroundColor:[UIColor clearColor]];
 		_label.textColor = [UIColor blackColor];
 		_label.textAlignment = NSTextAlignmentCenter;
@@ -267,7 +550,7 @@
 		underLabel = [[UILabel alloc] initWithFrame:botFrame];
 		[underLabel setNumberOfLines:1];
 		underLabel.font = [UIFont fontWithName:@"HelveticaNeue-Light" size:14];
-		[underLabel setText:@"Music widget on screen"];
+		[underLabel setText:@"Music Widget On Screen"];
 		[underLabel setBackgroundColor:[UIColor clearColor]];
 		underLabel.textColor = [UIColor grayColor];
 		underLabel.textAlignment = NSTextAlignmentCenter;
@@ -289,14 +572,14 @@
 - (void) loadView
 {
 	[super loadView];
-	[self HeaderCell];
-	self.title = @"WidPlayer";
+	self.title = @"WidPlayer";	
 	[UISwitch appearanceWhenContainedIn:self.class, nil].onTintColor = [UIColor colorWithRed:0.09 green:0.99 blue:0.99 alpha:1.0];
 	UIButton *heart = [[UIButton alloc] initWithFrame:CGRectZero];
 	[heart setImage:[[UIImage alloc] initWithContentsOfFile:[[self bundle] pathForResource:@"Heart" ofType:@"png"]] forState:UIControlStateNormal];
 	[heart sizeToFit];
 	[heart addTarget:self action:@selector(love) forControlEvents:UIControlEventTouchUpInside];
 	self.navigationItem.rightBarButtonItem = [[UIBarButtonItem alloc] initWithCustomView:heart];
+	[self HeaderCell];
 }
 - (void)increaseAlpha
 {
