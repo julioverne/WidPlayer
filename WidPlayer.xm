@@ -816,7 +816,7 @@ static __strong NSString* kTextString = @"text";
 			effectViewLiryc.frame = CGRectMake(0, 0, springboardWindow.frame.size.width-((springboardWindow.frame.size.width/20)*2), effectViewLiryc.frame.size.height);
 			lirycLabel.frame = CGRectMake(0, 0, springboardWindow.frame.size.width-((springboardWindow.frame.size.width/20)*2), lirycLabel.frame.size.height);
 			
-			if(!isIOS9) {
+			if(!isIOS9 && !isIOS10) {
 				if (MPUSystemMediaControlsView *MediaC = (MPUSystemMediaControlsView *)object_getIvar(controlsView, class_getInstanceVariable(objc_getClass("MPUSystemMediaControlsViewController"), "_mediaControlsView")) ) {
 					if (MPUNowPlayingTitlesView* TrackInfo = (MPUNowPlayingTitlesView *)object_getIvar(MediaC, class_getInstanceVariable(objc_getClass("MPUSystemMediaControlsView"), "_trackInformationView")) ) {
 						if (UILabel *_titleLabel = (UILabel *)object_getIvar(TrackInfo, class_getInstanceVariable(objc_getClass("MPUNowPlayingTitlesView"), "_titleLabel")) ) {
