@@ -1,6 +1,7 @@
 #import "WidPlayer.h"
 
 static BOOL isIOS9;
+static BOOL isIOS10;
 static BOOL WidPlayerEnabled;
 static BOOL WidPlayerHideNoPlaying;
 static BOOL WidPlayerShowLockScreen;
@@ -99,7 +100,7 @@ static void screenChanged()
 }
 
 @implementation WidPlayer
-@synthesize springboardWindow, libraryWindow, controller, blurView, effectView, shadowPath;
+@synthesize minimalMode, springboardWindow, libraryWindow, controller, blurView, effectView, shadowPath;
 @synthesize artworkView, kNoArtwork, isPlayingSBApp, controlsView, mediaPlay, mediaPicker, controlsContentView;
 @synthesize lyricView, effectViewLiryc, lirycTimeArray, lirycLabel, indexNextTimeLiryc, nextTimeLiryc;
 __strong static id _sharedObject;
@@ -261,13 +262,18 @@ __strong static id _sharedObject;
 		artworkView.image = kNoArtwork;
 		[artworkView setUserInteractionEnabled:YES];
 		
-		UITapGestureRecognizer *tapGestureLibrary = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(openPlayingApplication:)];
+		UITapGestureRecognizer *tapGestureLibrary = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(toggleMinimalMode)];
 		tapGestureLibrary.numberOfTapsRequired = 2;
 		[artworkView addGestureRecognizer:tapGestureLibrary];
 		
 		UITapGestureRecognizer *artWorkTapOpenGesture = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(libraryWindowToggle)];
 		artWorkTapOpenGesture.numberOfTapsRequired = 1;
+		[artWorkTapOpenGesture requireGestureRecognizerToFail:tapGestureLibrary];
 		[artworkView addGestureRecognizer:artWorkTapOpenGesture];
+		
+		UILongPressGestureRecognizer* touchAndHoldRecognizer = [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(openPlayingApplication:)];
+		touchAndHoldRecognizer.minimumPressDuration = 1;
+		[artworkView addGestureRecognizer:touchAndHoldRecognizer];
 		
 		
 		if(objc_getClass("MPUSystemMediaControlsViewController") != nil) {
@@ -298,16 +304,9 @@ __strong static id _sharedObject;
 		tapGesture.numberOfTapsRequired = 2;
 		[controller.view addGestureRecognizer:tapGesture];
 		
-		
-		
-		
 		UITapGestureRecognizer *tapGestureRecognizer2 = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(showWidPlayer)];
 		tapGestureRecognizer2.numberOfTouchesRequired = 1;
 		[controller.view addGestureRecognizer:tapGestureRecognizer2];
-		
-		//UILongPressGestureRecognizer* touchAndHoldRecognizer = [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(hideWidPlayer:)]; 
-		//touchAndHoldRecognizer.minimumPressDuration = 1.0;
-		//[controller.view addGestureRecognizer:touchAndHoldRecognizer];
 		
 		
 		lyricView = [UIView new];
@@ -353,6 +352,7 @@ __strong static id _sharedObject;
 				} else if(UISlider* ControlsVolumeView2 = (UISlider *)object_getIvar(MediaC, class_getInstanceVariable(objc_getClass("MPUSystemMediaControlsView"), "_volumeSliderView")) ) {
 					[ControlsVolumeView2 setThumbImage:[UIImage new] forState:UIControlStateNormal];
 				}
+				if(!isIOS10) {
 				if (MPUNowPlayingTitlesView* TrackInfo = (MPUNowPlayingTitlesView *)object_getIvar(MediaC, class_getInstanceVariable(objc_getClass("MPUSystemMediaControlsView"), "_trackInformationView")) ) {
 					if (UILabel *_titleLabel = (UILabel *)object_getIvar(TrackInfo, class_getInstanceVariable(objc_getClass("MPUNowPlayingTitlesView"), "_titleLabel")) ) {
 						_titleLabel.font = [_titleLabel.font fontWithSize:((springboardWindow.frame.size.height)/8)];
@@ -366,6 +366,7 @@ __strong static id _sharedObject;
 						[TrackInfo setTitleLeading:((springboardWindow.frame.size.height)/7)];
 					}
 				}
+				}
 			}			
 		}
 	}
@@ -374,7 +375,40 @@ __strong static id _sharedObject;
 	
 	return self;
 }
-
+- (void)toggleMinimalMode
+{
+	if(TitleTransparent) {
+		return;
+	}
+	[NSObject cancelPreviousPerformRequestsWithTarget:self selector:@selector(_toggleMinimalMode) object:kLirics];
+	[self performSelector:@selector(_toggleMinimalMode) withObject:kLirics afterDelay:0.2f];
+}
+- (void)_toggleMinimalMode
+{
+	minimalMode = !minimalMode;
+	if(minimalMode) {
+		[libraryWindow removeFromSuperview];
+		[lyricView removeFromSuperview];
+		[controlsContentView removeFromSuperview];
+		[UIView animateWithDuration:0.3/2 animations:^{
+			springboardWindow.frame = CGRectMake(springboardWindow.frame.origin.x, springboardWindow.frame.origin.y, artworkView.frame.size.width+(2*artworkView.frame.origin.x), springboardWindow.frame.size.height);
+		} completion:nil];
+	} else {
+		[controller.view removeFromSuperview];
+		[(UIView *)springboardWindow addSubview:libraryWindow];
+		[(UIView *)springboardWindow addSubview:lyricView];
+		[(UIView *)springboardWindow addSubview:controller.view];
+		[controller.view addSubview:controlsContentView];
+		[UIView animateWithDuration:0.3/2 animations:^{
+			springboardWindow.frame = CGRectMake(springboardWindow.frame.origin.x, springboardWindow.frame.origin.y, WidgetWidth, WidgetWidth/WidgetHeightPercent);
+		} completion:nil];
+	}
+	[self _updateShadow];
+}
+- (void)togglePlayPause
+{
+	MRMediaRemoteSendCommand(kMRTogglePlayPause, nil);
+}
 - (void)updateShadow
 {
 	[NSObject cancelPreviousPerformRequestsWithTarget:self selector:@selector(_updateShadow) object:kLirics];
@@ -388,7 +422,6 @@ __strong static id _sharedObject;
 	springboardWindow.layer.shadowOpacity = ShadowAlpha;
 	springboardWindow.layer.shadowPath = shadowPath.CGPath;
 }
-
 - (NSString*)encodeBase64WithData:(NSData*)theData
 {
 	@autoreleasepool {
@@ -501,7 +534,7 @@ __strong static id _sharedObject;
 				__block NSURL* UrlString = [NSURL URLWithString:[prepareString stringByAppendingString:[NSString stringWithFormat:sigFormat, [self urlEncodeUsingEncoding:[self hmacSHA1BinBase64:[prepareString stringByAppendingString:dateToday] withKey:@"secretsuper"]]]]];
 				
 				if(UrlString != nil) {
-					dispatch_async(myQueue/*dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0)*/, ^{
+					dispatch_async(myQueue, ^{
 						@try {
 							NSError *error = nil;
 							NSHTTPURLResponse *responseCode = nil;
@@ -660,7 +693,7 @@ static __strong NSString* kTextString = @"text";
 {
 	dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
 	if(YES) {
-	dispatch_async(myQueue/*dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0)*/, ^{
+	dispatch_async(myQueue, ^{
 	MRMediaRemoteGetNowPlayingInfo(dispatch_get_main_queue(), ^(CFDictionaryRef result) {
 		@try {
 		if(result) {			
@@ -729,6 +762,10 @@ static __strong NSString* kTextString = @"text";
 }
 - (void)libraryWindowToggle
 {
+	if(minimalMode) {
+		[self togglePlayPause];
+		return;
+	}
 	if(springboardWindow.alpha < 1) {
 		[self showWidPlayer];
 		return;
@@ -795,6 +832,10 @@ static __strong NSString* kTextString = @"text";
 						}
 					}
 				}
+			}
+			
+			if(minimalMode) {
+				springboardWindow.frame = CGRectMake(springboardWindow.frame.origin.x, springboardWindow.frame.origin.y, artworkView.frame.size.width+(2*artworkView.frame.origin.x), springboardWindow.frame.size.height);
 			}
 			
 			[self updateShadow];
@@ -993,7 +1034,12 @@ void lockScreenState(CFNotificationCenterRef center, void *observer, CFStringRef
 	%orig;
 	[[WidPlayer sharedInstance] firstload];	
 }
--(void)noteInterfaceOrientationChanged:(int)arg1 duration:(float)arg2
+- (void)noteInterfaceOrientationChanged:(int)arg1 duration:(float)arg2
+{
+	%orig;
+	[WidPlayer notifyOrientationChange];
+}
+- (void)noteInterfaceOrientationChanged:(long long)arg1 duration:(double)arg2 logMessage:(id)arg3
 {
 	%orig;
 	[WidPlayer notifyOrientationChange];
@@ -1135,7 +1181,8 @@ static void settingsChangedWidPlayer(CFNotificationCenterRef center, void *obser
 __attribute__((constructor)) static void initialize_WidPlayer()
 {
 	@autoreleasepool {
-		isIOS9 = kCFCoreFoundationVersionNumber>=1240.10?YES:NO;
+		isIOS9 = (kCFCoreFoundationVersionNumber>=1240.10 && kCFCoreFoundationVersionNumber<1348.00)?YES:NO;
+		isIOS10 = kCFCoreFoundationVersionNumber>=1348.00?YES:NO;
 		CFNotificationCenterAddObserver(CFNotificationCenterGetDarwinNotifyCenter(), NULL, settingsChangedWidPlayer, CFSTR("com.julioverne.widplayer/Settings"), NULL, CFNotificationSuspensionBehaviorCoalesce);
 		settingsChangedWidPlayer(NULL, NULL, NULL, NULL, NULL);
 		//if (WidPlayerEnabled) {

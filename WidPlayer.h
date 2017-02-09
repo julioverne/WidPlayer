@@ -158,6 +158,7 @@
 	UILabel* lirycLabel;
 	int indexNextTimeLiryc;
 	NSTimeInterval nextTimeLiryc;
+	BOOL minimalMode;
 }
 
 @property (nonatomic, strong) WidPlayerWindow* springboardWindow;
@@ -179,6 +180,7 @@
 @property (nonatomic, strong) UILabel* lirycLabel;
 @property (nonatomic, assign) int indexNextTimeLiryc;
 @property (nonatomic, assign) NSTimeInterval nextTimeLiryc;
+@property (nonatomic, assign) BOOL minimalMode;
 
 + (id)sharedInstance;
 + (BOOL)sharedInstanceExist;
@@ -186,6 +188,8 @@
 + (void)notifyScreenChange;
 - (void)changeScreenNotify;
 - (void)updateShadow;
+- (void)toggleMinimalMode;
+- (void)togglePlayPause;
 - (void)fixTransportControls;
 - (void)layoutPlayerController;
 - (void)firstload;
